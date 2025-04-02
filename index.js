@@ -243,7 +243,7 @@ function findUnifiedAccidental(key) {
 function getAccidentalsInKeySig(keySignature, accidental) {
   let scale = ["C", "D", "E", "F", "G", "A", "B"];
   if (accidental == "#") {
-    return buildIntervalCycle(4, keySignature,scale, scale.indexOf("F"))
+    return buildIntervalCycle(4, keySignature, scale, scale.indexOf("F"))
   }
   else {
     return buildIntervalCycle(3, keySignature, scale, scale.indexOf("B"))
@@ -259,15 +259,15 @@ function buildMajorScale(key) {
   let majorScale = []
   let scale = ["C", "D", "E", "F", "G", "A", "B"];
   let indexOfKey = scale.indexOf(key[0])
-  let currentScaleNoAccidental = scale.slice(indexOfKey).concat(scale.slice(0, indexOfKey))
+  let scaleOfKeyNoAccidental = scale.slice(indexOfKey).concat(scale.slice(0, indexOfKey))
   let accidentalObj = findUnifiedAccidental(key)
   if (accidentalObj != "error") {
     let keySignature = accidentalObj.cycle.indexOf(key) - 1
     let accidentalList = getAccidentalsInKeySig(keySignature, accidentalObj.accidental);
     for (let i = 0; i < 7; i++) {
-      let currentNote = currentScaleNoAccidental[i]
+      let currentNote = scaleOfKeyNoAccidental[i]
       accidentalList.forEach((elem) => {
-        if (elem == currentScaleNoAccidental[i] && accidentalObj.accidental != "none" ) {
+        if (elem == scaleOfKeyNoAccidental[i] && accidentalObj.accidental != "none" ) {
           currentNote += accidentalObj.accidental
         }
       })
@@ -337,11 +337,11 @@ function restructureModalPattern(modeNum, pattern = ["w","w","h","w","w","w","h"
  */
 function findNoteIndex(noteName, scale = buildChromaticScaleEnharmonic()) {
   for (let i = 0; i < scale.length; i++) {
-    if (noteName == scale[i]) {
+    if (noteName.toUpperCase() == scale[i].toUpperCase()) {
       return i
     }
     let currentElem = scale[i].split("/");
-    if (currentElem[0] == noteName || currentElem[1] == noteName) {
+    if (currentElem[0].toUpperCase() == noteName.toUpperCase() || currentElem[1] != undefined && currentElem[1].toUpperCase() == noteName.toUpperCase()) {
       return i
     }
   }
@@ -851,16 +851,12 @@ const scoreDsiplay = document.querySelector("#score")
 const scaleCtrl = document.querySelector("#scaleCtrl")
 const scaleBtn = document.querySelector("#scaleBtn")
 
-//let deck = buildMusicDeck(buildChromaticScaleEnharmonic(), 7)
-let chromatic = buildChromaticScaleEnharmonic()
+
 
 displayPossibleKeys(scaleCtrl, buildCircleOfFifths()[0])
 displayPossibleKeys(scaleCtrl, buildCircleOfFifths()[1])
-
-let currentScale = buildMajorScale("A")
-
-currentScale = buildMajorScale(scaleCtrl.value)
-
+let chromatic = buildChromaticScaleEnharmonic()
+let currentScale = buildMajorScale(scaleCtrl.value)
 let deck = buildMusicDeck(currentScale, 7)
 let playerHand = []
 let selectedCards = []
@@ -880,6 +876,12 @@ playBtn.addEventListener("click", (e) => {
   scoreHand(intervalList, " Intervals of ")
   displayData(chordList[0], "Triads of ", handTypeDisplay)
   displayData(chordList[1], "Sevenths of ", handTypeDisplay)
+
+  let handsize = selectedCards.length
+  selectedCards.forEach((elem) => elem.remove())
+  players.forEach((elem) => fillHand(elem,handsize))
+  selectedCards = []
+
 
 })
 
@@ -925,7 +927,7 @@ gameboard.addEventListener("contextmenu", (e) => {
 
 
 /** 
- * 
+ * console.log(createHarmonicStructure("C", "majorHepta"))
  * console.log(buildCircleOfFifths)
 console.log(createHarmonicStructure("B/Cb", "majorHepta"))
 console.log("Major : ===================================================")
