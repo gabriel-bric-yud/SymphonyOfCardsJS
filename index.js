@@ -187,6 +187,23 @@ function sanitizeAccidentals(accidental, scale) {
   return sanitizedScale
 }
 
+/**Create Circle of Fifths function:
+ * This creates two interval cycles, in fourths and fifths.
+ * It then sanitizes the accidentals to show only the correct one.
+ * @returns An array containing the list of Flat keys and Sharp Keys
+ */
+function buildCircleOfFifths() {
+  let flatKeys = buildIntervalCycle(5, 7, buildChromaticScaleEnharmonic())
+  let sharpKeys = buildIntervalCycle(7, 7, buildChromaticScaleEnharmonic())
+
+  flatKeys = sanitizeAccidentals("b", flatKeys)
+  sharpKeys = sanitizeAccidentals("#", sharpKeys)
+
+  //return flatKeys.concat(sharpKeys.slice(1))
+  return [flatKeys, sharpKeys]
+}
+
+
 /**
  * Find Unified Accidental function:
  * @param {string} key The name of the key (ie: Bb)
@@ -195,11 +212,9 @@ function sanitizeAccidentals(accidental, scale) {
 function findUnifiedAccidental(key) {
   key = key.charAt(0).toUpperCase() + key.substring(1)
   if (key != "C") {
-    let flatKeys = buildIntervalCycle(5, 7, buildChromaticScaleEnharmonic())
-    let sharpKeys = buildIntervalCycle(7, 7, buildChromaticScaleEnharmonic())
-
-    flatKeys = sanitizeAccidentals("b", flatKeys)
-    sharpKeys = sanitizeAccidentals("#", sharpKeys)
+    let circleOfFifths = buildCircleOfFifths()
+    let flatKeys = circleOfFifths[0]
+    let sharpKeys = circleOfFifths[1]
 
     if (flatKeys.includes(key)) {
       return {accidental: "b", cycle: flatKeys}
@@ -322,6 +337,9 @@ function restructureModalPattern(modeNum, pattern = ["w","w","h","w","w","w","h"
  */
 function findNoteIndex(noteName, scale = buildChromaticScaleEnharmonic()) {
   for (let i = 0; i < scale.length; i++) {
+    if (noteName == scale[i]) {
+      return i
+    }
     let currentElem = scale[i].split("/");
     if (currentElem[0] == noteName || currentElem[1] == noteName) {
       return i
@@ -440,6 +458,7 @@ function createDiatonicStructure(startNote, scale, structure) {
  */
 function createHarmonicStructure(startNote, structure, scale = buildChromaticScaleEnharmonic()) {
   let noteIndex = findNoteIndex(startNote, scale)
+  console.log(noteIndex)
   if (noteIndex != "error") {
     let pattern = chromaticStructuresIntervalicObj[structure] 
     let harmonicStructure = []
@@ -613,6 +632,21 @@ function fillHand(parent, max, currentDeck = deck) {
 }
 
 
+
+//////////////////////  GAMEBOARD UI FUNCTIONS  //////////////////////
+
+
+function displayPossibleKeys(parent, keyArray) {
+  keyArray.forEach((key) => {
+    let optionBox = document.createElement("option");
+    optionBox.innerHTML = key;
+    optionBox.value = key;
+    parent.appendChild(optionBox)
+  })
+
+}
+
+
 //////////////////////  GAME LOGIC  //////////////////////
 
 function convertToEnharmonicName(note) {
@@ -768,6 +802,7 @@ function identifyChords(cardList) {
 }
 
 
+//////////////////////  SCORE LOGIC  //////////////////////
 
 
 
@@ -813,12 +848,19 @@ const drawBtn = document.getElementById("drawBtn")
 const playBtn = document.getElementById("playBtn")
 const handTypeDisplay = document.querySelector("#handFlexBox")
 const scoreDsiplay = document.querySelector("#score")
+const scaleCtrl = document.querySelector("#scaleCtrl")
+const scaleBtn = document.querySelector("#scaleBtn")
 
 //let deck = buildMusicDeck(buildChromaticScaleEnharmonic(), 7)
 let chromatic = buildChromaticScaleEnharmonic()
 
-console.log(chromatic)
+displayPossibleKeys(scaleCtrl, buildCircleOfFifths()[0])
+displayPossibleKeys(scaleCtrl, buildCircleOfFifths()[1])
+
 let currentScale = buildMajorScale("A")
+
+currentScale = buildMajorScale(scaleCtrl.value)
+
 let deck = buildMusicDeck(currentScale, 7)
 let playerHand = []
 let selectedCards = []
@@ -831,15 +873,11 @@ players.forEach((elem) => {fillHand(elem,10)})
 playBtn.addEventListener("click", (e) => {
   removeChildrenDivs(handTypeDisplay)
   let octaveList = consolidateOcaves(getNotesCardDivArray(selectedCards), currentScale)
-  console.log(octaveList)
   let sortedHand = sortByCount(octaveList).filter((value) => Number(value[1]) > 0)
-
   let intervalList = identifyIntervals(octaveList)
-  console.log(intervalList)
   let chordList = identifyChords(octaveList)
   scoreHand(sortedHand, " octave of ", 1, "High note of ")
   scoreHand(intervalList, " Intervals of ")
-  //scoreHand(chordList, " Chords of ")
   displayData(chordList[0], "Triads of ", handTypeDisplay)
   displayData(chordList[1], "Sevenths of ", handTypeDisplay)
 
@@ -850,6 +888,14 @@ drawBtn.addEventListener("click", (e) => {
 })
 
 
+
+scaleBtn.addEventListener("click", (e) => {
+  players.forEach((elem) => {removeChildrenDivs(elem)})
+  let currentScale = buildMajorScale(scaleCtrl.value)
+  deck = buildMusicDeck(currentScale, 7)
+  players.forEach((elem) => {fillHand(elem,10)})
+
+})
 
 
 
@@ -879,6 +925,9 @@ gameboard.addEventListener("contextmenu", (e) => {
 
 
 /** 
+ * 
+ * console.log(buildCircleOfFifths)
+console.log(createHarmonicStructure("B/Cb", "majorHepta"))
 console.log("Major : ===================================================")
 console.log(buildMajorScale("C"))
 console.log(buildMajorScale("Bb"))
