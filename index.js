@@ -1,5 +1,4 @@
-
-//////////////////////  HARMONIC STRUCTURES //////////////////////
+//////////////////////  HARMONIC STRUCTURE OBJECTS //////////////////////
 
 /**
  * Theses objects create harmonic structures using Array indexes starting at index 1
@@ -80,9 +79,47 @@ const chromaticStructuresIntervalicObj = {
 }
 
 
+//////////////////////  UTILITY FUNCTIONS  //////////////////////
+
+/**
+ * Choose Random Index function:
+ * @param {Array} array The list of items to choose from.
+ * @returns A random index within the array
+ */
+function chooseRandomIndex(array) {
+  let randomIndex = Math.floor(Math.random() * array.length)
+  return randomIndex
+}
+
+/**
+ * Remove From Array function:
+ * @param {*} elem The element in the array to remove.
+ * @param {Array} array The parent array.
+ */
+function removeFromArray(elem, array) {
+  array.splice(array.indexOf(elem), 1)
+}
+
+/**
+ * Remove Children Divs function:
+ * @param {HTMLDivElement} parent The parent div element to remove all children from.
+ */
+function removeChildrenDivs(parent) {
+  while (parent.firstChild) {
+    parent.firstChild.remove()
+  }
+}
+
+
+
 //////////////////////  DECK FUNCTIONS  //////////////////////
 
-
+/**
+ * Build Music Deck function:
+ * @param {Array} scale The array of notes to choose from.
+ * @param {number} octaves The total number of octaves.
+ * @returns An array of objects containing the two key values: note in array, octave number
+ */
 function buildMusicDeck(scale, octaves) {
   let musicDeck = [];
 
@@ -213,14 +250,11 @@ function findUnifiedAccidental(key) {
   key = key.charAt(0).toUpperCase() + key.substring(1)
   if (key != "C") {
     let circleOfFifths = buildCircleOfFifths()
-    let flatKeys = circleOfFifths[0]
-    let sharpKeys = circleOfFifths[1]
-
-    if (flatKeys.includes(key)) {
-      return {accidental: "b", cycle: flatKeys}
+    if (circleOfFifths[0].includes(key)) {
+      return {accidental: "b", cycle: circleOfFifths[0]}
     }
-    else if (sharpKeys.includes(key))  {
-      return {accidental: "#", cycle: sharpKeys}
+    else if (circleOfFifths[1].includes(key))  {
+      return {accidental: "#", cycle: circleOfFifths[1]}
     }
     else {
       console.log("ERROR! Key doesn't exist");
@@ -236,17 +270,17 @@ function findUnifiedAccidental(key) {
 
 /**
  * Get Accidentals In Key Sig function:
- * @param {number} keySignature Numbe of accidentals in key signature (ie: 1 for the key of F)
+ * @param {number} keySignatureNum Number of accidentals in key signature (ie: 1 for the key of F)
  * @param {char} accidental Either sharp or flat symbol (#/b)
  * @returns An Array with the notes of each accidental in the key signature
  */
-function getAccidentalsInKeySig(keySignature, accidental) {
+function getAccidentalsInKeySig(keySignatureNum, accidental) {
   let scale = ["C", "D", "E", "F", "G", "A", "B"];
   if (accidental == "#") {
-    return buildIntervalCycle(4, keySignature, scale, scale.indexOf("F"))
+    return buildIntervalCycle(4, keySignatureNum, scale, scale.indexOf("F"))
   }
   else {
-    return buildIntervalCycle(3, keySignature, scale, scale.indexOf("B"))
+    return buildIntervalCycle(3, keySignatureNum, scale, scale.indexOf("B"))
   }
 }
 
@@ -259,15 +293,15 @@ function buildMajorScale(key) {
   let majorScale = []
   let scale = ["C", "D", "E", "F", "G", "A", "B"];
   let indexOfKey = scale.indexOf(key[0])
-  let scaleOfKeyNoAccidental = scale.slice(indexOfKey).concat(scale.slice(0, indexOfKey))
+  let currentKeyNoAccidental = scale.slice(indexOfKey).concat(scale.slice(0, indexOfKey))
   let accidentalObj = findUnifiedAccidental(key)
   if (accidentalObj != "error") {
     let keySignature = accidentalObj.cycle.indexOf(key) - 1
     let accidentalList = getAccidentalsInKeySig(keySignature, accidentalObj.accidental);
     for (let i = 0; i < 7; i++) {
-      let currentNote = scaleOfKeyNoAccidental[i]
+      let currentNote = currentKeyNoAccidental[i]
       accidentalList.forEach((elem) => {
-        if (elem == scaleOfKeyNoAccidental[i] && accidentalObj.accidental != "none" ) {
+        if (elem == currentKeyNoAccidental[i] && accidentalObj.accidental != "none" ) {
           currentNote += accidentalObj.accidental
         }
       })
@@ -298,7 +332,7 @@ function buildModalScale(majorScale, modeNum) {
 
 /**
  * Convert Scale Step Pattern To Num function:
- * @param {Array} pattern An Array of the pattern in Whole steps and Halfsteps
+ * @param {Array} pattern An Array of the scale pattern in Whole steps and Halfsteps (ie: WWHWWWH)
  * @returns A new array converted into index leaps.
  */
 function convertScaleStepPatternToNum(pattern) {
@@ -325,7 +359,7 @@ function convertScaleStepPatternToNum(pattern) {
  * @returns A new array converted into index leaps.
  */
 function restructureModalPattern(modeNum, pattern = ["w","w","h","w","w","w","h"]) {
-  return convertScaleStepPatternToNum(pattern.slice(modeNum - 1).concat(pattern.slice(0, modeNum - 2)))
+  return convertScaleStepPatternToNum(buildModalScale(pattern, modeNum))
 }
 
 
@@ -353,6 +387,44 @@ function findNoteIndex(noteName, scale = buildChromaticScaleEnharmonic()) {
 
 //////////////////////  HARMONIC STRUCTURES BUILD FUNCTIONS  //////////////////////
 
+/**
+ * Create Diatonic Structure function:
+ * @param {string} startNote A name of the note to start the structure
+ * @param {Array} scale An Array of the scale of notes to build with
+ * @param {string} structure The name of the structure
+ * @returns An Array of notes in the chosen structure
+ */
+function createDiatonicStructure(startNote, scale, structure) {
+  let pattern = diatonicStructuresIntervalicObj[structure] 
+  let diatonicStructure = []
+  pattern.forEach((elem) => {
+    startNote += elem
+    diatonicStructure.push(scale[startNote % scale.length])
+  })
+  return diatonicStructure
+}
+
+
+/**
+ * Create Harmonic Structure function:
+ * @param {string} startNote A name of the note to start the structure
+ * @param {string} structure The name of the structure
+ * @returns An Array of notes in the chosen structure
+ */
+function createHarmonicStructure(startNote, structure, scale = buildChromaticScaleEnharmonic()) {
+  let noteIndex = findNoteIndex(startNote, scale)
+  console.log(noteIndex)
+  if (noteIndex != "error") {
+    let pattern = chromaticStructuresIntervalicObj[structure] 
+    let harmonicStructure = []
+    pattern.forEach((elem) => {
+      noteIndex += elem
+      harmonicStructure.push(scale[noteIndex % scale.length])
+    })
+  
+    return harmonicStructure
+  }
+}
 
 
 /**
@@ -432,48 +504,17 @@ function buildGenericScaleObjWithCallback(key, scaleCallback) {
   }
 }
 
-/**
- * Create Diatonic Structure function:
- * @param {string} startNote A name of the note to start the structure
- * @param {Array} scale An Array of the scale of notes to build with
- * @param {string} structure The name of the structure
- * @returns An Array of notes in the chosen structure
- */
-function createDiatonicStructure(startNote, scale, structure) {
-  let pattern = diatonicStructuresIntervalicObj[structure] 
-  let diatonicStructure = []
-  pattern.forEach((elem) => {
-    startNote += elem
-    diatonicStructure.push(scale[startNote % scale.length])
-  })
-  return diatonicStructure
-}
 
-
-/**
- * Create Harmonic Structure function:
- * @param {string} startNote A name of the note to start the structure
- * @param {string} structure The name of the structure
- * @returns An Array of notes in the chosed structure
- */
-function createHarmonicStructure(startNote, structure, scale = buildChromaticScaleEnharmonic()) {
-  let noteIndex = findNoteIndex(startNote, scale)
-  console.log(noteIndex)
-  if (noteIndex != "error") {
-    let pattern = chromaticStructuresIntervalicObj[structure] 
-    let harmonicStructure = []
-    pattern.forEach((elem) => {
-      noteIndex += elem
-      harmonicStructure.push(scale[noteIndex % scale.length])
-    })
-  
-    return harmonicStructure
-  }
-}
 
 
 //////////////////////  CREATE CARD FUNCTIONS  //////////////////////
 
+/**
+ * Create Card function:
+ * @param {string} cardRank The card rank.
+ * @param {Number} cardOctave The card octave.
+ * @returns A card div element with front, back and labels.
+ */
 function createCard(cardRank, cardOctave) {
   const frontOfCard = document.createElement('div')
   const backOfCard = document.createElement('div')
@@ -486,8 +527,6 @@ function createCard(cardRank, cardOctave) {
   createCardLabel('center', frontOfCard, labelFrame, cardRank)
   createCardLabel('top', frontOfCard, labelFrame, cardOctave)
   createCardLabel('bottom', frontOfCard, labelFrame, cardOctave)
-  //createCardLabel('octaveTop', frontOfCard, labelFrame, cardOctave)
-  //createCardLabel('octaveBottom', frontOfCard, labelFrame, cardOctave)
   const cardDiv = document.createElement('div')
   cardDiv.appendChild(frontOfCard)
   cardDiv.appendChild(backOfCard)
@@ -496,13 +535,17 @@ function createCard(cardRank, cardOctave) {
   cardDiv.dataset.octave = cardOctave
   cardDiv.classList.add(`${cardRank}${cardOctave}`)
   cardDiv.dataset.selected = "false";
-  //cardDiv.querySelectorAll('.cardLabel').forEach((elem) => {
-    //elem.innerHTML = cardRank
-  //})
 
   return cardDiv;
 }
 
+/**
+ * Create Card Label function:
+ * @param {string} className The class of the card labels position. (ie: Top)
+ * @param {HTMLDivElement} frontDiv The parent div for the label frame.
+ * @param {HTMLDivElement} labelFrame The parent div for the label.
+ * @param {string} txtContent The text for the label. 
+ */
 function createCardLabel(className, frontDiv, labelFrame, txtContent)  {
   const labelDiv = document.createElement('div')
   const label = document.createElement('p')
@@ -518,24 +561,36 @@ function createCardLabel(className, frontDiv, labelFrame, txtContent)  {
 
 //////////////////////  FLIP CARD FUNCTIONS  //////////////////////
 
+/**
+ * Show Hide function:
+ * @param {HTMLBodyElement} elem The element to be shown or hidden.
+ */
 function showHide(elem) {
-  if (elem.classList.contains('show')) {
-    elem.classList.remove('show')
-    elem.classList.add('hide')
-  }
-  else {
-    elem.classList.remove('hide')
-    elem.classList.add('show')
-  }
+  elem.classList.toggle("show");
+  elem.classList.toggle("hide")
+      /**
+      if (elem.classList.contains('show')) {
+        elem.classList.remove('show')
+        elem.classList.add('hide')
+      }
+      else {
+        elem.classList.remove('hide')
+        elem.classList.add('show')
+      }
+      */
 }
 
-
+/**
+ * Flip Card function:
+ * @param {HTMLDivElement} card The parent card div.
+ * @param {boolean} animateBool A bool to tell whether card shoul already be flipped.
+ */
 function flipCard(card, animateBool) {
   let front = card.querySelector('.frontCard')
   let back = card.querySelector('.backCard')
   if (animateBool) {
-    card.classList.contains('flip') ? card.classList.remove('flip') :  card.classList.add('flip')
-    //card.style.pointerEvents = "none"
+        //card.classList.contains('flip') ? card.classList.remove('flip') :  card.classList.add('flip')
+    card.classList.toggle("flip")
     setTimeout(() => {
       showHide(front)
       showHide(back)
@@ -546,34 +601,28 @@ function flipCard(card, animateBool) {
     showHide(front)
     showHide(back) 
   }
-
-}
-
-
-//////////////////////  CARD UTILITY FUNCTIONS  //////////////////////
-
-function chooseRandomIndex(array) {
-  let randomIndex = Math.floor(Math.random() * array.length)
-  return randomIndex
-}
-
-function removeFromArray(elem, array) {
-  array.splice(array.indexOf(elem), 1)
-}
-
-
-function removeChildrenDivs(parent) {
-  while (parent.firstChild) {
-    parent.firstChild.remove()
-  }
 }
 
 
 
+//////////////////////  CARD HELPER FUNCTIONS  //////////////////////
+
+/**
+ * Count Cards function
+ * @param {HTMLDivElement} parent The parent div containing the cards.
+ * @returns The length of an array of all the cardDiv elements counted inside parent.
+ */
 function countCards(parent) {
   return parent.querySelectorAll(".cardDiv").length
 }
 
+
+/**
+ * Resize Card function:
+ * @param {HTMLDivElement} card The card div to be resized.
+ * @param {number} numCards The total number of cards in the parent div.
+ * @param {number} index The position of the card div element in the parent.
+ */
 function resizeCard(card, numCards, index) {
   card.style.left = `${index * card.offsetWidth * .75}px`   //set card x coordinate with about 25% crossover
   if (numCards > 8) { //check if total cards is too big and needs full resize
@@ -587,6 +636,11 @@ function resizeCard(card, numCards, index) {
   }
 }
 
+
+/**
+ * Resize Hand function:
+ * @param {HTMLDivElement} parent The parent div where cards are located.
+ */
 function resizeHand(parent) {
   let numCards = countCards(parent)
   parent.querySelectorAll(".cardDiv").forEach((card, index) => {
@@ -594,12 +648,16 @@ function resizeHand(parent) {
   })
 }
 
+
+/**
+ * Add Card To Hand function:
+ * @param {HTMLDivElement} parent The target parent div to add card.
+ * @param {Array} currentDeck The current list of available cards in the deck.
+ */
 function addCardToHand(parent, currentDeck) {
   let randIndex = chooseRandomIndex(currentDeck)
   let currentCard = createCard(currentDeck[randIndex].note,currentDeck[randIndex].octave )
-
   parent.appendChild(currentCard)
-
   currentCard.addEventListener("click", (e) => {
     if (selectedCards.length < 7) {
       e.target.dataset.selected == "false" ? selectedCards.push(e.target) : removeFromArray(e.target, selectedCards)
@@ -607,24 +665,26 @@ function addCardToHand(parent, currentDeck) {
       e.target.classList.toggle("selectedCard")
     } 
   })
-  
   removeFromArray(currentDeck[randIndex], currentDeck)
   playerHand.push(currentCard)
-
   setTimeout(() => {
     flipCard(currentCard, true)
   }, 100)
-
-
   currentCard.addEventListener("transitionend", (e) => {
     e.target.style.pointerEvents = "all"
   })
 }
 
+
+/**
+ * Fill Hand function:
+ * @param {HTMLDivElement} parent The target parent div.
+ * @param {number} max The maximum number of cards in hand.
+ * @param {Array} currentDeck The array of available cards in hand.
+ */
 function fillHand(parent, max, currentDeck = deck) {
   let currentHandSize = countCards(parent)
-  let maxHandSize = currentHandSize + max
-  while (currentHandSize < maxHandSize) {
+  while (currentHandSize < max) {
     addCardToHand(parent, currentDeck)
     currentHandSize++
   }
@@ -681,7 +741,7 @@ function convertToEnharmonicName(note) {
 
 
 
-function getNotesCardDivArray(cardDivArray) {
+function getNotesRankArray(cardDivArray) {
   let noteList = []
 
   cardDivArray.forEach((elem) => {
@@ -851,24 +911,23 @@ const scoreDsiplay = document.querySelector("#score")
 const scaleCtrl = document.querySelector("#scaleCtrl")
 const scaleBtn = document.querySelector("#scaleBtn")
 
-
-
 displayPossibleKeys(scaleCtrl, buildCircleOfFifths()[0])
 displayPossibleKeys(scaleCtrl, buildCircleOfFifths()[1])
+
+let playerHand = []
+let selectedCards = []
 let chromatic = buildChromaticScaleEnharmonic()
 let currentScale = buildMajorScale(scaleCtrl.value)
 let deck = buildMusicDeck(currentScale, 7)
-let playerHand = []
-let selectedCards = []
+
 
 players.forEach((elem) => {fillHand(elem,10)})
-
 
 //////////////////////  GAME EVENT LISTENERS  //////////////////////
 
 playBtn.addEventListener("click", (e) => {
   removeChildrenDivs(handTypeDisplay)
-  let octaveList = consolidateOcaves(getNotesCardDivArray(selectedCards), currentScale)
+  let octaveList = consolidateOcaves(getNotesRankArray(selectedCards), currentScale)
   let sortedHand = sortByCount(octaveList).filter((value) => Number(value[1]) > 0)
   let intervalList = identifyIntervals(octaveList)
   let chordList = identifyChords(octaveList)
@@ -877,16 +936,15 @@ playBtn.addEventListener("click", (e) => {
   displayData(chordList[0], "Triads of ", handTypeDisplay)
   displayData(chordList[1], "Sevenths of ", handTypeDisplay)
 
-  let handsize = selectedCards.length
   selectedCards.forEach((elem) => elem.remove())
-  players.forEach((elem) => fillHand(elem,handsize))
+  players.forEach((elem) => fillHand(elem,10))
   selectedCards = []
 
 
 })
 
 drawBtn.addEventListener("click", (e) => {
-  players.forEach((elem) => fillHand(elem,1))
+  players.forEach((elem) => fillHand(elem,10))
 })
 
 
@@ -898,7 +956,6 @@ scaleBtn.addEventListener("click", (e) => {
   players.forEach((elem) => {fillHand(elem,10)})
 
 })
-
 
 
 //////////////////////  WINDOW EVENT LISTENERS  //////////////////////
