@@ -944,17 +944,10 @@ function identifyAllDiatonicScalesInHand(cardList, gameObj) {
   console.log(cardList)
 
   let majorScale = gameObj.scale
-
   let majPentScale = createDiatonicStructure(majorScale[0], majorScale, "majorPenta")
   let minPentScale = createDiatonicStructure(majorScale[5], majorScale, "minorPenta")
-  let diatonicScalesList = [majPentScale, minPentScale, majorScale]
-
-  for (let i = 1; i < 5; i++) {
-    diatonicScalesList.push(createDiatonicStructure(majorScale[i], majorScale, "majorHepta"))
-  }
 
   let scalesInHand = []
-
   if (cardList.length >= 5 ) {
     identifySingleDiatonicScaleInHand(cardList, majPentScale) ? scalesInHand.push(`${majPentScale[0]} Major Pentatonic`) : console.log(false)
     identifySingleDiatonicScaleInHand(cardList, minPentScale) ? scalesInHand.push(`${minPentScale[0]} Minor Pentatonic`) : console.log(false)
@@ -963,9 +956,7 @@ function identifyAllDiatonicScalesInHand(cardList, gameObj) {
     }
 
   }
-
   return scalesInHand
-
 }
 
 function updateGameObj(scale, keySig, deck) {
@@ -1071,17 +1062,18 @@ playBtn.addEventListener("click", (e) => {
   scoreHand(intervalList, " Intervals of ")
 
   //let scaleList = identifyDiatonicScalesInHand(octaveList, gameObj)
-  let scaleList = identifySingleDiatonicScaleInHand(getNotesRankArray(selectedCards), createDiatonicStructure(gameObj.key, gameObj.scale, "majorPenta"))
-  console.log(scaleList)
-  console.log(identifyAllDiatonicScalesInHand(getRidOfDuplicateCards(selectedCards, gameObj), gameObj))
-
 
 
   if (octaveList.length > 2) {
-  let chordList = identifyChordsInHand(octaveList)
+    let chordList = identifyChordsInHand(octaveList)
     displayData(chordList[0], "Triads of ", handTypeDisplay)
     displayData(chordList[1], "Sevenths of ", handTypeDisplay)
+
   }
+
+  let scaleList = identifyAllDiatonicScalesInHand(getRidOfDuplicateCards(selectedCards, gameObj), gameObj)
+  console.log(scaleList)
+  displayData(scaleList, "", handTypeDisplay)
 
 
   selectedCards.forEach((elem) => elem.remove())
