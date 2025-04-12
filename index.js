@@ -692,6 +692,23 @@ function fillHand(parent, max, currentDeck = deck) {
 }
 
 
+function sortHand(array) {
+  console.log(array)
+  let newArray = Array.from(array)
+  newArray.sort((a,b) => {
+    if (b.dataset.rank > a.dataset.rank) {
+      return -1
+    }
+    else if (b.dataset.rank < a.dataset.rank) {
+      return 1
+    }
+
+    return 0;   
+    }
+  )
+  console.log(newArray)
+}
+
 
 //////////////////////  GAMEBOARD UI FUNCTIONS  //////////////////////
 
@@ -920,8 +937,15 @@ let chromatic = buildChromaticScaleEnharmonic()
 let currentScale = buildMajorScale(scaleCtrl.value)
 let deck = buildMusicDeck(currentScale, 7)
 
+let cardList
+players.forEach((person) => {
+  fillHand(person,10)
+  console.log(person.querySelectorAll(".cardDiv"))
+  cardList = person.querySelectorAll(".cardDiv")
+  //
+})
 
-players.forEach((elem) => {fillHand(elem,10)})
+sortHand(cardList)
 
 //////////////////////  GAME EVENT LISTENERS  //////////////////////
 
