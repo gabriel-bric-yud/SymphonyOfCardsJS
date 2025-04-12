@@ -122,9 +122,9 @@ body {
 
 
 
-#drawBtn, #playBtn, #scaleBtn {
+.gameBtn {
   margin: 20px;
-  width: fit-content;
+  width: 20ch;
   padding: 20px;
   border-radius: 20px;
 }
@@ -133,7 +133,6 @@ body {
   display: flex;
   width: fit-content;
   justify-self: center;
-  margin-top: 20px;
 }
 
 
