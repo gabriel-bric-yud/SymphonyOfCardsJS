@@ -770,6 +770,199 @@ function displayPossibleKeys(parent, keyArray) {
 
 }
 
+
+//Frequency Functions////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function getFrequencyChromatic(num) {
+  let noteNum;
+  let note = "";
+  let freq;
+
+  if (num <= 11) {
+    noteNum = Number(num);
+  }
+  else {
+    if (Number(num) >= 83) {
+      noteNum =  (Number(num) % 84)
+      noteNum = (noteNum % 12);
+    }
+    else {
+      noteNum = (num % 12);
+    }
+  }
+
+  switch(noteNum) {
+    case 0:
+      freq = 32.70320// 261.63;
+      note = "C";
+      break;
+    case 1:
+      freq = 34.64783 // 277.18;
+      note = "C#/Db"
+      break;
+    case 2:
+      freq = 36.70810 //293.66;
+      note = "D"
+      break;
+    case 3:
+      freq = 38.89087 //311.13;
+      note = "D#/Eb"
+      break;
+    case 4:
+      freq = 41.20344 //329.62;
+      note = "E"
+      break;
+    case 5:
+      freq = 43.65353 // 349.23;
+      note = "F"
+      break;
+    case 6:
+      freq = 46.24930 //69.99;
+      note = "F#/Gb"
+      break;
+    case 7:
+      freq = 48.99943 //392;
+      note = "G"
+      break;
+    case 8:
+      freq = 51.91309 //415.30;
+      note = "G#/Ab"
+      break;
+    case 9:
+      freq = 55.00000;
+      note = "A"
+      break;
+    case 10:
+      freq = 58.27047;
+      note = "A#/Bb"
+      break;
+    case 11:
+      freq = 61.73541;
+      note = "B"
+      break;
+  }
+
+  let multiplier = 1
+  if (num > 11) {
+    num > 83 ? multiplier = Math.floor((Number(num) % 84) /12) : multiplier = Math.floor(num /12);
+    if (multiplier < 2) {
+      note = note + (multiplier + 1) 
+      freq *= 2 
+    }
+    else {
+      for (let i = 0; i < multiplier; i++) {
+        freq *= 2
+      }
+      note = note + (multiplier + 1)
+    }
+  }
+  return [freq, note];
+}
+
+
+function getFrequencyNoteWithName(noteName, noteOctave) {
+  let enharmonicName = convertToEnharmonicName(noteName)
+  let chromaticScale = buildChromaticScaleEnharmonic()
+  let noteIndex = chromaticScale.indexOf(enharmonicName)
+  c.log(noteOctave)
+  c.log(noteName)
+
+  let freq;
+
+  switch(noteIndex) {
+    case 0:
+      freq = 32.70320// 261.63;
+      note = "C";
+      break;
+    case 1:
+      freq = 34.64783 // 277.18;
+      note = "C#/Db"
+      break;
+    case 2:
+      freq = 36.70810 //293.66;
+      note = "D"
+      break;
+    case 3:
+      freq = 38.89087 //311.13;
+      note = "D#/Eb"
+      break;
+    case 4:
+      freq = 41.20344 //329.62;
+      note = "E"
+      break;
+    case 5:
+      freq = 43.65353 // 349.23;
+      note = "F"
+      break;
+    case 6:
+      freq = 46.24930 //69.99;
+      note = "F#/Gb"
+      break;
+    case 7:
+      freq = 48.99943 //392;
+      note = "G"
+      break;
+    case 8:
+      freq = 51.91309 //415.30;
+      note = "G#/Ab"
+      break;
+    case 9:
+      freq = 55.00000;
+      note = "A"
+      break;
+    case 10:
+      freq = 58.27047;
+      note = "A#/Bb"
+      break;
+    case 11:
+      freq = 61.73541;
+      note = "B"
+      break;
+  }
+
+  let multiplier = noteOctave
+    if (multiplier < 2) {
+      freq *= 2 
+    }
+    else {
+      for (let i = 0; i < multiplier; i++) {
+        freq *= 2
+      }
+    }
+  
+    console.log(freq)
+    console.log(note)
+  return [freq, note + noteOctave];
+}
+
+
+function playOsc(freq) {
+  let osc
+  let gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0.2;
+  osc = audioCtx.createOscillator();
+  osc.type = "sine"// type//"sawtooth" //"square";
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  osc.connect(gainNode).connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime)
+  //gainNode.gain.setTargetAtTime(0.1, audioCtx.currentTime, .02);
+  gainNode.gain.setTargetAtTime(0, audioCtx.currentTime + .5, .1);
+  osc.stop(audioCtx.currentTime + 1)
+  //setTimeout(() => {
+    //osc.disconnect()
+  //}, 350)
+}
+
+
+function playNoteSoundOfHand(handList) {
+  console.log(handList)
+  for (let i = 0; i < handList[2].length; i++) {
+    setTimeout(() => {
+      playOsc(getFrequencyNoteWithName(handList[0], handList[2][i])[0])
+    }, i * 500)
+  }
+}
+
 //////////////////////  GAME LOGIC  //////////////////////
 
 function convertToEnharmonicName(note) {
@@ -1186,6 +1379,7 @@ function calculateHandScore(handType, playedHandObj ) {
       currentHand.forEach((elem) => {
         score += Number(elem[1]) * Number(multiplier)
       })
+      playNoteSoundOfHand(currentHand[0])
       break;
     case "intervals":
       console.log(playedHandObj.intervals)
@@ -1194,7 +1388,11 @@ function calculateHandScore(handType, playedHandObj ) {
       displayData(playedHandObj.intervals, " Intervals of ", handTypeDisplay)
       currentHand.forEach((elem) => {
         score += Number(elem[1]) * Number(multiplier)
+        elem[2][0].forEach((item) => {
+          playNoteSoundOfHand(item)
+        })
       })
+
       break;
     case "triads":
       console.log(playedHandObj.triads)
@@ -1203,6 +1401,11 @@ function calculateHandScore(handType, playedHandObj ) {
       displayData(playedHandObj.triads, "Triads of ", handTypeDisplay)
       currentHand.forEach((elem) => {
         score += Number(elem[2].length) * Number(multiplier)
+
+        elem[2].forEach((item) => {
+          playNoteSoundOfHand(item)
+        })
+
       })
       break;
     case "sevenths":
@@ -1212,8 +1415,12 @@ function calculateHandScore(handType, playedHandObj ) {
       displayData(playedHandObj.sevenths, "Sevent Chord of ", handTypeDisplay)
 
 
-      currentHand[2].forEach((elem) => {
-        score += Number(elem[1]) * Number(multiplier)
+      currentHand.forEach((elem) => {
+        currentHand[2].forEach((elem) => {
+          score += Number(elem[1]) * Number(multiplier)
+          playNoteSoundOfHand(elem)
+        })
+        
       })
       break;
     case "scales":
@@ -1257,8 +1464,11 @@ let scoreObj = {
   bonus: 10
 }
 
-//////////////////////  MAIN LOOP  //////////////////////
 
+
+
+//////////////////////  MAIN LOOP  //////////////////////
+const audioCtx = new (window.AudioContext || window.webkit.AudioContext)();
 const gameboard = document.querySelector("#gameboard")
 const player1 = document.getElementById("player1")
 const drawBtn = document.getElementById("drawBtn")
