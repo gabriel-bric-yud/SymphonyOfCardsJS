@@ -1507,6 +1507,9 @@ let chromatic = buildChromaticScaleEnharmonic()
 let currentScale = buildMajorScale(scaleCtrl.value)
 let deck = buildMusicDeck(currentScale, 7)
 
+//deck = buildMusicDeck(buildMajorScale("C").concat(buildMajorScale("F")), 7)
+//currentScale = buildMajorScale("C").concat(buildMajorScale("F"))
+
 let gameObj = updateGameObj(currentScale, keySig, deck)
 
 fillHand(player1,10, gameObj)
