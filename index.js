@@ -739,7 +739,7 @@ function sortHandByOctave(array) {
 function getRidOfDuplicateCards2(cardDivArray, gameObj) {
   let sanitizedArray = []
   consolidateOcaves(cardDivArray, gameObj.scale).map((x) => {
-    if (x[1] > 0) {
+    if (x[1].length > 0) {
       sanitizedArray.push( x[0])
     }
   })
@@ -963,6 +963,14 @@ function playNoteSoundOfHand(handList) {
   }
 }
 
+
+function playSoundOfNoteList(noteList) {
+  for (let i = 0; i < noteList[1].length; i++) {
+    setTimeout(() => {
+      playOsc(getFrequencyNoteWithName(noteList[0], noteList[1][i])[0])
+    }, i * 500)
+  }
+}
 //////////////////////  GAME LOGIC  //////////////////////
 
 function convertToEnharmonicName(note) {
@@ -1020,7 +1028,7 @@ function getDivProperty(cardDivArray, property) {
  * Consolidate Octaves function:
  * @param {Array} noteArray An array of HTMLElement divs
  * @param {Array} scaleArray An array of notes in a scale
- * @returns An array of notes grouped by repeats
+ * @returns An array of notes grouped by repeated octaves
  */
 function consolidateOcaves(noteArray, scaleArray = buildChromaticScaleEnharmonic()) {
   let noteRankArray = getDivProperty(noteArray, "rank")
@@ -1036,7 +1044,7 @@ function consolidateOcaves(noteArray, scaleArray = buildChromaticScaleEnharmonic
         //playedNotes.push([elem, noteOctaveArray[index]])
       }
     })
-    return [elem, count, playedNotes]
+    return [elem, playedNotes]
     //return {note: elem, repeats: count, playedCard: playedNotes }
   })
   return octaveList
@@ -1044,56 +1052,67 @@ function consolidateOcaves(noteArray, scaleArray = buildChromaticScaleEnharmonic
 
 
 function sortByCount(noteList) {
+  console.log(noteList)
   noteList.sort((a,b) => {
-    if (Number(a[1]) > Number(b[1])) {
+    if (Number(a[1].length) > Number(b[1].length)) {
       return -1
     }
-    else if (Number(a[1]) < Number(b[1])) {
+    else if (Number(a[1].length) < Number(b[1].length)) {
       return 1
     }
     return 0;   
     }
   )
-  return(noteList)
+  return noteList
 }
+
+
+
 
 function identifyIntervalsInHand(cardList) {
-
+  //console.log(cardList)
   if (cardList.length > 1) {
-    
     let chromaticScale = buildChromaticScaleEnharmonic()
-    let enharmonicList = cardList.map((elem) =>  [convertToEnharmonicName(elem[0]), elem[1], elem[2]]).filter((value) => Number(value[1]) > 0 )
-    let intervals = ["1,", "b2", "2", "b3", "3", "P4", "#4", "5", "b6", "6", "b7", "7"]
+    //console.log(chromaticScale)
+    let enharmonicList = cardList.map((elem) =>  [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
+    let intervals = ["unison,", "minor2nd", "major2nd", "minor3rd", "major3rd", "perfect4", "sharp4", "perfect5", "minor6", "major6", "minor7", "major7"]
     let intervalList = []
-    
 
     intervals.forEach((interval, index) => {
-      let count = 0
-      let playedInterval = []
+      //console.log(interval)
+      //console.log(index)
+      let intervalNotePairs = []
 
-      enharmonicList.forEach((note1,index1) => {
-        enharmonicList.forEach((note2, index2) => {
-          if (note1 !== note2) {
-            let currentInterval = (chromaticScale.indexOf(note2[0]) - chromaticScale.indexOf(note1[0])) % chromaticScale.length 
-            if (currentInterval < 0) {currentInterval = chromaticScale.length + currentInterval }
-            if (currentInterval == index) {
-              let multiplier
-              note1[1] < note2[1] ? multiplier = note1[1] : multiplier = note2[1]
-              count += (1 * multiplier)
-
-              playedInterval.push([cardList[index1],cardList[index2]])
+      for (let i = 0; i < enharmonicList.length; i++) {
+        for (let g = 0; g < enharmonicList.length; g++) {
+          if (i != g) {
+            //console.log(`Note1: ${enharmonicList[i]} index: ${i}`)
+            //console.log(`Note2: ${enharmonicList[g] }index: ${g}`)
+            let enharmonicIndex = (chromaticScale.indexOf(enharmonicList[g][0]) - chromaticScale.indexOf(enharmonicList[i][0])) % chromaticScale.length 
+            //console.log(`Enharmonic Index: ${enharmonicIndex}`)
+            if (enharmonicIndex < 0) { 
+              enharmonicIndex = chromaticScale.length + enharmonicIndex 
+              //console.log(`Enharmonic Index Corrected: ${enharmonicIndex}`)
             }
-          }
-        })
-      })
-      intervalList.push([interval, count, playedInterval ])
-    })
 
-    return (sortByCount(intervalList.filter((value) => Number(value[1]) > 0)))
+
+            if (enharmonicIndex == index) {
+              intervalNotePairs.push([cardList[i], cardList[g]])
+              //console.log(`Interval Match! ${enharmonicList[i][0]} and ${enharmonicList[g][0]} equal a ${interval} `)
+              //console.log(`Interval Match! ${cardList[i][0]} and ${cardList[g][0]} equal a ${interval} `)
+            }
+            //console.log("======================================")
+          }
+        }
+      }
+      intervalList.push([interval, intervalNotePairs])
+    })
+    //console.log (sortByCount(intervalList.filter((value) => Number(value[1].length) > 0)))
+    return (sortByCount(intervalList.filter((value) => Number(value[1].length) > 0)))
   }
   return null
-
 }
+
 
 
 function identifyTriadsInHand(cardList, gameObj) {
@@ -1103,8 +1122,9 @@ function identifyTriadsInHand(cardList, gameObj) {
   let majorScale = gameObj.scale
   if (cardList.length > 2) {
     let chromaticScale = buildChromaticScaleEnharmonic()
-    let enharmonicList = cardList.map((elem) => [convertToEnharmonicName(elem[0]), elem[1], elem[2]]).filter((value) => Number(value[1]) > 0 )
+    let enharmonicList = cardList.map((elem) => [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
     let triadList = []
+    console.log(enharmonicList)
 
     enharmonicList.map((x) => {return x[0]}).forEach((note, index, array) => {
       let originalNoteName = cardList[index][0]
@@ -1116,10 +1136,10 @@ function identifyTriadsInHand(cardList, gameObj) {
       if (array.includes(chromaticScale[fifth])) {
         let triad = createDiatonicStructure(cardList[index][0], majorScale, "triad")
         if (array.includes(chromaticScale[m3])) {
-          triadList.push([`${originalNoteName} Minor Triad`,1, cardList.filter((value) => triad.includes(value[0]))])
+          triadList.push([`${originalNoteName} Minor Triad`, cardList.filter((value) => triad.includes(value[0]))])
         }
         if (array.includes(chromaticScale[Maj3])) {
-          triadList.push([`${originalNoteName} Major Triad`,1, cardList.filter((value) => triad.includes(value[0]))])
+          triadList.push([`${originalNoteName} Major Triad`, cardList.filter((value) => triad.includes(value[0]))])
         }
       }
     })
@@ -1138,7 +1158,7 @@ function identifySeventhChordsInHand(cardList, gameObj) {
   let majorScale = gameObj.scale
   if (cardList.length > 2) {
     let chromaticScale = buildChromaticScaleEnharmonic()
-    let enharmonicList = cardList.map((elem) => [convertToEnharmonicName(elem[0]), elem[1], elem[2]]).filter((value) => Number(value[1]) > 0 )
+    let enharmonicList = cardList.map((elem) => [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
     let seventhChordList = []
 
     enharmonicList.map((x) => {return x[0]}).forEach((note, index, array) => {
@@ -1153,15 +1173,15 @@ function identifySeventhChordsInHand(cardList, gameObj) {
         let seventh = createDiatonicStructure(cardList[index][0], majorScale, "seventhChord")
         if (array.includes(chromaticScale[m3])) {
           if (array.includes(chromaticScale[m7])) {
-            seventhChordList.push([`${originalNoteName} Minor 7`, 1, cardList.filter((value) => seventh.includes(value[0]))])
+            seventhChordList.push([`${originalNoteName} Minor 7`, cardList.filter((value) => seventh.includes(value[0]))])
           }
         }
         if (array.includes(chromaticScale[Maj3])) {
           if (array.includes(chromaticScale[Maj7])) {
-            seventhChordList.push(`${originalNoteName} Major 7`,1, cardList.filter((value) => seventh.includes(value[0])))
+            seventhChordList.push([`${originalNoteName} Major 7`, cardList.filter((value) => seventh.includes(value[0]))])
           }
           else if (array.includes(chromaticScale[m7])) {
-            seventhChordList.push(`${originalNoteName} Dom 7`,1, cardList.filter((value) => seventh.includes(value[0])))
+            seventhChordList.push([`${originalNoteName} Dom 7`, cardList.filter((value) => seventh.includes(value[0]))])
           }
         }
       }
@@ -1248,7 +1268,7 @@ function identifySingleDiatonicScaleInHand(cardList, scale, gameObj) {
     return [scale, playedNotes]
   }
   else {
-    return null
+    return false
   }
 
 }
@@ -1273,6 +1293,8 @@ function identifyAllDiatonicScalesInHand(cardList, gameObj) {
     }
 
   }
+
+  console.log(scalesInHand)
   return scalesInHand.length != 0 ? scalesInHand : null;
 }
 
@@ -1287,8 +1309,9 @@ function updateGameObj(scale, keySig, deck) {
 //////////////////////  SCORE LOGIC  //////////////////////
 
 function getTopRepeatingofHandType(noteList) {
+  console.log(noteList)
   if (noteList != null && noteList.length > 0) {
-    let topRepeating = noteList.filter((value, index, array) => value[1] == array[0][1])
+    let topRepeating = noteList.filter((value, index, array) => value[1].length == array[0][1].length)
 
     //displayData(topRepeating, handTxt, handTypeDisplay)
     return topRepeating
@@ -1320,15 +1343,19 @@ function displayData(list, txt, parent) {
 function checkAllHandTypes(selectedCards, gameObj) {
 
   let octaveList = consolidateOcaves(selectedCards, gameObj.scale)
-  let sortedHand = sortByCount(octaveList).filter((value) => Number(value[1]) > 0)
+  let sortedHand = sortByCount(octaveList).filter((value) => Number(value[1].length) > 0)
+  console.log(sortedHand)
   let intervalList = identifyIntervalsInHand(sortedHand)
+  console.log(intervalList)
   let topOctaves = getTopRepeatingofHandType(sortedHand)
   let topIntervals = getTopRepeatingofHandType(intervalList)
 
   let triadList = identifyTriadsInHand(sortedHand, gameObj)
+  console.log(triadList)
   let seventhList = identifySeventhChordsInHand(sortedHand, gameObj)
+  console.log(seventhList)
   //let scaleList = identifyDiatonicScalesInHand(octaveList, gameObj)
-  let scaleList = identifyAllDiatonicScalesInHand(octaveList, gameObj)
+  let scaleList = identifyAllDiatonicScalesInHand(sortedHand, gameObj)
 
   return {
     octaves: topOctaves,
@@ -1339,6 +1366,9 @@ function checkAllHandTypes(selectedCards, gameObj) {
   }
 
 }
+
+
+
 
 function displayAllHands(playedHandObj) {
   console.log(playedHandObj)
@@ -1365,8 +1395,6 @@ function chooseTopScoringHand(playedHandObj) {
 }
 
 function calculateHandScore(handType, playedHandObj ) {
-  console.log(playedHandObj)
-  c.log(handType)
   let currentHand
   let score = 0
   let multiplier
@@ -1375,11 +1403,12 @@ function calculateHandScore(handType, playedHandObj ) {
       console.log(playedHandObj.octaves)
       currentHand = playedHandObj.octaves
       multiplier = scoreObj.octaves
-      displayData(playedHandObj.octaves, playedHandObj.octaves[0][1] + " octaves of ", handTypeDisplay)
+      displayData(currentHand, currentHand[0][1].length + " octaves of ", handTypeDisplay)
       currentHand.forEach((elem) => {
         score += Number(elem[1]) * Number(multiplier)
       })
-      playNoteSoundOfHand(currentHand[0])
+      playSoundOfNoteList(currentHand[0])
+      //playNoteSoundOfHand(currentHand[0])
       break;
     case "intervals":
       console.log(playedHandObj.intervals)
@@ -1388,9 +1417,16 @@ function calculateHandScore(handType, playedHandObj ) {
       displayData(playedHandObj.intervals, " Intervals of ", handTypeDisplay)
       currentHand.forEach((elem) => {
         score += Number(elem[1]) * Number(multiplier)
-        elem[2][0].forEach((item) => {
-          playNoteSoundOfHand(item)
+        elem[1].forEach((item) => {
+          item.forEach((note, index) => {
+            setTimeout(() => {
+              playSoundOfNoteList(note)
+
+            }, index * 500)
+            
+          })
         })
+
       })
 
       break;
@@ -1400,11 +1436,11 @@ function calculateHandScore(handType, playedHandObj ) {
       multiplier = scoreObj.triads
       displayData(playedHandObj.triads, "Triads of ", handTypeDisplay)
       currentHand.forEach((elem) => {
-        score += Number(elem[2].length) * Number(multiplier)
+        score += Number(elem[1].length) * Number(multiplier)
 
-        elem[2].forEach((item) => {
-          playNoteSoundOfHand(item)
-        })
+        /* elem[2].forEach((item) => {
+          //playNoteSoundOfHand(item)
+        }) */
 
       })
       break;
@@ -1415,13 +1451,13 @@ function calculateHandScore(handType, playedHandObj ) {
       displayData(playedHandObj.sevenths, "Sevent Chord of ", handTypeDisplay)
 
 
-      currentHand.forEach((elem) => {
-        currentHand[2].forEach((elem) => {
+      /* currentHand.forEach((elem) => {
+        currentHand[1].forEach((elem) => {
           score += Number(elem[1]) * Number(multiplier)
-          playNoteSoundOfHand(elem)
+          //playNoteSoundOfHand(elem)
         })
         
-      })
+      }) */
       break;
     case "scales":
       console.log(playedHandObj.scales)
@@ -1442,7 +1478,7 @@ function calculateHandScore(handType, playedHandObj ) {
 
 
   scoreDisplay.innerHTML = score + " points"
-  console.log(score)
+  //console.log(score)
 }
 
 
@@ -1512,6 +1548,7 @@ playBtn.addEventListener("click", (e) => {
   fillHand(player1,10, gameObj)
   selectedCards = []
   cardList = player1.querySelectorAll(".cardDiv")
+  resizeHand(player1, sortHandByRank(sortHandByOctave(cardList), gameObj))
 })
 
 drawBtn.addEventListener("click", (e) => {
@@ -1526,6 +1563,7 @@ scaleBtn.addEventListener("click", (e) => {
   gameObj = updateGameObj(currentScale, keySig, deck)
   fillHand(player1,10, gameObj)
   cardList = player1.querySelectorAll(".cardDiv")
+  
 })
 
 sortRankBtn.addEventListener("click", (e) => {
@@ -1579,6 +1617,43 @@ console.log(createHarmonicStructure("C", "mixolydianHepta"))
 console.log(buildMajorScaleObj("Bb"))
 console.log(buildGenericScaleObj(createHarmonicStructure("C", "melMinorHepta")))
 console.log(buildGenericScaleObj(createHarmonicStructure("C", "harmMinorHepta")))
+
+
+function identifyIntervalsInHand2(cardList) {
+
+  if (cardList.length > 1) {
+    
+    let chromaticScale = buildChromaticScaleEnharmonic()
+    let enharmonicList = cardList.map((elem) =>  [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
+    let intervals = ["unison,", "minor2nd", "major2nd", "minor3rd", "major3rd", "perfect4", "sharp4", "perfect5", "minor6", "major6", "minor7", "major7"]
+    let intervalList = []
+
+    
+    intervals.forEach((interval, index) => {
+      let playedInterval = []
+      enharmonicList.forEach((note1,index1) => {
+        enharmonicList.forEach((note2, index2) => {
+          if (note1 !== note2) {
+            let enharmonicIndex = (chromaticScale.indexOf(note2[0]) - chromaticScale.indexOf(note1[0])) % chromaticScale.length 
+            if (enharmonicIndex < 0) {enharmonicIndex = chromaticScale.length + enharmonicIndex }
+            if (enharmonicIndex == index) {
+              playedInterval.push([cardList[index1],cardList[index2]])
+            }
+          }
+        })
+      })
+      intervalList.push([interval, playedInterval])
+    })
+
+
+    return (sortByCount(intervalList.filter((value) => Number(value[1].length) > 0)))
+  }
+  return null
+
+}
+
+
+
 */
 
 
