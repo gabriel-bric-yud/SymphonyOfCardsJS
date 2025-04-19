@@ -969,6 +969,22 @@ function playSoundOfNoteList(noteList) {
 }
 //////////////////////  GAME LOGIC  //////////////////////
 
+/**
+ * Get Div Property function:
+ * @param {Array} cardDivArray An array of HTMLElement divs
+ * @param {*} property A string name of a dataset property
+ * @returns An array of dataset properties from each element
+ */
+function getDivProperty(cardDivArray, property) {
+  return cardDivArray.map((elem) => elem.dataset[property])
+}
+
+
+/**
+ * Convert to Enharmonic Name function:
+ * @param {string} note Note name
+ * @returns The enharmonic name of the note.
+ */
 function convertToEnharmonicName(note) {
   let alphabet = "CDEFGAB"
   let enharmonicName
@@ -1004,55 +1020,38 @@ function convertToEnharmonicName(note) {
 }
 
 
-function getNotesRankArray(cardDivArray) {
-  let noteList = []
-
-  cardDivArray.forEach((elem) => {
-    noteList.push(elem.dataset.rank)
-  })
-  return noteList
-}
-
-function getDivProperty(cardDivArray, property) {
-  let noteList = []
-
-  cardDivArray.forEach((elem) => {
-    noteList.push(elem.dataset[property])
-  })
-  return noteList
-
-}
-
 
 /**
  * Consolidate Octaves function:
  * @param {Array} noteArray An array of HTMLElement divs
  * @param {Array} scaleArray An array of notes in a scale
- * @returns An array of notes grouped by repeated octaves
+ * @returns An array of notes with their octave list (ie:[[note, [octave]], [note, [octave]], etc...] )
  */
 function consolidateOcaves(noteArray, scaleArray = buildChromaticScaleEnharmonic()) {
   let noteRankArray = getDivProperty(noteArray, "rank")
   let noteOctaveArray = getDivProperty(noteArray,"octave")
+  c.log(noteRankArray)
+  c.log(noteOctaveArray)
 
-  let octaveList = scaleArray.map((elem) => {
-    let playedNotes= []
-    let count = 0;
+  let consolidatedNoteDataArray = scaleArray.map((elem) => {
+    let playedOctaves= []
     noteRankArray.forEach((item, index) => {
       if (item == elem) {
-        count++
-        playedNotes.push(noteOctaveArray[index])
-        //playedNotes.push([elem, noteOctaveArray[index]])
+        playedOctaves.push(noteOctaveArray[index])
       }
     })
-    return [elem, playedNotes]
-    //return {note: elem, repeats: count, playedCard: playedNotes }
+    return [elem, playedOctaves]
   })
-  return octaveList
+  return consolidatedNoteDataArray
 }
 
 
+/**
+ * Sort By Count function:
+ * @param {Array} noteList An array of notes with their octave list. (ie: [[note, [octaves]], [note, [octaves]], etc...] )
+ * @returns A sorted array of notes with their octave list. (ie: [[note, [octaves]], [note, [octaves]], etc...] )
+ */
 function sortByCount(noteList) {
-  console.log(noteList)
   noteList.sort((a,b) => {
     if (Number(a[1].length) > Number(b[1].length)) {
       return -1
@@ -1067,49 +1066,36 @@ function sortByCount(noteList) {
 }
 
 
-
-
+/**
+ * Indetify Intervals In Hand function:
+ * @param {Array} cardList An array of notes with their octave list. (ie: [[note, [octaves]], [note, [octaves]]] ) 
+ * @returns 
+ */
 function identifyIntervalsInHand(cardList) {
-  //console.log(cardList)
   if (cardList.length > 1) {
     let chromaticScale = buildChromaticScaleEnharmonic()
-    //console.log(chromaticScale)
-    let enharmonicList = cardList.map((elem) =>  [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
+    let enharmonicList = cardList.map((elem) => [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
     let intervals = ["unison,", "minor2nd", "major2nd", "minor3rd", "major3rd", "perfect4", "sharp4", "perfect5", "minor6", "major6", "minor7", "major7"]
-    let intervalList = []
-    c.log(enharmonicList)
+    let playedIntervalList = []
 
     intervals.forEach((interval, index) => {
-      //console.log(interval)
-      //console.log(index)
       let intervalNotePairs = []
-
       for (let i = 0; i < enharmonicList.length; i++) {
         for (let g = 0; g < enharmonicList.length; g++) {
           if (i != g) {
-            //console.log(`Note1: ${enharmonicList[i]} index: ${i}`)
-            //console.log(`Note2: ${enharmonicList[g] }index: ${g}`)
             let enharmonicIndex = (chromaticScale.indexOf(enharmonicList[g][0]) - chromaticScale.indexOf(enharmonicList[i][0])) % chromaticScale.length 
-            //console.log(`Enharmonic Index: ${enharmonicIndex}`)
             if (enharmonicIndex < 0) { 
               enharmonicIndex = chromaticScale.length + enharmonicIndex 
-              //console.log(`Enharmonic Index Corrected: ${enharmonicIndex}`)
             }
-
-
             if (enharmonicIndex == index) {
               intervalNotePairs.push([cardList[i], cardList[g]])
-              //console.log(`Interval Match! ${enharmonicList[i][0]} and ${enharmonicList[g][0]} equal a ${interval} `)
-              //console.log(`Interval Match! ${cardList[i][0]} and ${cardList[g][0]} equal a ${interval} `)
             }
-            //console.log("======================================")
           }
         }
       }
-      intervalList.push([interval, intervalNotePairs])
+      playedIntervalList.push([interval, intervalNotePairs])
     })
-    //console.log (sortByCount(intervalList.filter((value) => Number(value[1].length) > 0)))
-    return (sortByCount(intervalList.filter((value) => Number(value[1].length) > 0)))
+    return (sortByCount(playedIntervalList.filter((value) => Number(value[1].length) > 0)))
   }
   return null
 }
