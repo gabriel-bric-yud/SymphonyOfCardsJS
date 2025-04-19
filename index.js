@@ -1118,12 +1118,11 @@ function identifyTriadsInHand(cardList, scale) {
   //check if fifth exists, then check if third, then check if seventh
   c.log(cardList)
   if (cardList.length > 2) {
-    let triadList = new Array();
-    let triadListObj = new Object();
+    let playedTriadObj = new Object();
     let chromaticScale = buildChromaticScaleEnharmonic()
     let enharmonicList = new Array(cardList.length)
     cardList.forEach((elem, index) => {
-      enharmonicList[index] = {note: convertToEnharmonicName(elem.name), octaves: elem.octaves}
+      enharmonicList[index] = {name: convertToEnharmonicName(elem.name), octaves: elem.octaves}
     })
 
     console.log(enharmonicList)
@@ -1139,91 +1138,89 @@ function identifyTriadsInHand(cardList, scale) {
       if (array.includes(chromaticScale[fifth])) {
         let triad = createDiatonicStructure(cardList[index].name, scale, "triad")
         if (array.includes(chromaticScale[m3])) {
-          triadList.push([`${cardList[index].name} Minor Triad`, cardList.filter((value) => triad.includes(value.name))])
-          triadList.push({triad: `${cardList[index].name} Minor Triad`, cardList.filter((value) => triad.includes(value.name))})
+          playedTriadObj[`${cardList[index].name} Minor Triad`] = cardList.filter((value) => triad.includes(value.name))
+
         }
-        if (array.includes(chromaticScale[Maj3])) {
-          triadList.push([`${cardList[index].name} Major Triad`, cardList.filter((value) => triad.includes(value.name))])
+        else if (array.includes(chromaticScale[Maj3])) {
+          playedTriadObj[`${cardList[index].name} Major Triad`] = cardList.filter((value) => triad.includes(value.name))
         }
       }
       else if (array.includes(chromaticScale[flatFifth])) {
         let triad = createDiatonicStructure(cardList[index].name, scale, "triad")
         if (array.includes(chromaticScale[m3])) {
-          triadList.push([`${originalNoteName} Diminished Triad`, cardList.filter((value) => triad.includes(value.name))])
+          playedTriadObj[`${cardList[index].name} Diminished Triad`] = cardList.filter((value) => triad.includes(value.name))
         }
       }
       else if (array.includes(chromaticScale[sharpFifth])) {
         let triad = createDiatonicStructure(cardList[index].name, scale, "triad")
         if (array.includes(chromaticScale[Maj3])) {
-          triadList.push([`${originalNoteName} Augmented Triad`, cardList.filter((value) => triad.includes(value.name))])
+          playedTriadObj[`${cardList[index].name} Augmented Triad`] = cardList.filter((value) => triad.includes(value.name))
         }
       }
-
     })
-
-    c.log(triadList)
-
-  return triadList.length != 0 ?  triadList :  null;
+    c.log(playedTriadObj)
+    return playedTriadObj
   }
   else {
     return null
   }
 }
 
-
-
-function identifySeventhChordsInHand(cardList, gameObj) {
-  //create chromatic scale
-  //check all intervals from each note
-  //check if fifth exists, then check if third, then check if seventh
-  let majorScale = gameObj.scale
+function identifySeventhChordsInHand(cardList, scale) {
+  c.log(cardList)
   if (cardList.length > 2) {
+    let playedSeventhChObj = new Object();
     let chromaticScale = buildChromaticScaleEnharmonic()
-    let enharmonicList = cardList.map((elem) => [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
-    let seventhChordList = []
+    let enharmonicList = new Array(cardList.length)
+    cardList.forEach((elem, index) => {
+      enharmonicList[index] = {name: convertToEnharmonicName(elem.name), octaves: elem.octaves}
+    })
 
-    enharmonicList.map((x) => {return x[0]}).forEach((note, index, array) => {
-      let originalNoteName = cardList[index][0]
-      let flatFifth = (chromaticScale.indexOf(note) + 6) % chromaticScale.length
-      let fifth = (chromaticScale.indexOf(note) + 7) % chromaticScale.length
-      let m3 = (chromaticScale.indexOf(note) + 3) % chromaticScale.length
-      let Maj3 = (chromaticScale.indexOf(note) + 4) % chromaticScale.length
-      let m7 = (chromaticScale.indexOf(note) + 10) % chromaticScale.length
-      let Maj7 = (chromaticScale.indexOf(note) + 11) % chromaticScale.length
+    console.log(enharmonicList)
+
+    enharmonicList.map((x) => x.name).forEach((elem, index, array) => {
+      c.log(array)
+      let fifth = (chromaticScale.indexOf(elem) + 7) % chromaticScale.length
+      let m3 = (chromaticScale.indexOf(elem) + 3) % chromaticScale.length
+      let Maj3 = (chromaticScale.indexOf(elem) + 4) % chromaticScale.length
+      let flatFifth = (chromaticScale.indexOf(elem) + 6) % chromaticScale.length
+      let m7 = (chromaticScale.indexOf(elem) + 10) % chromaticScale.length
+      let Maj7 = (chromaticScale.indexOf(elem) + 11) % chromaticScale.length
+
 
       if (array.includes(chromaticScale[fifth])) {
-        let seventh = createDiatonicStructure(cardList[index][0], majorScale, "seventhChord")
+        let seventhCh = createDiatonicStructure(cardList[index].name, scale, "seventhChord")
         if (array.includes(chromaticScale[m3])) {
           if (array.includes(chromaticScale[m7])) {
-            seventhChordList.push([`${originalNoteName} Minor 7`, cardList.filter((value) => seventh.includes(value[0]))])
+            playedSeventhChObj[`${cardList[index].name} Minor 7`] = cardList.filter((value) => seventhCh.includes(value.name))
           }
         }
-        if (array.includes(chromaticScale[Maj3])) {
+        else if (array.includes(chromaticScale[Maj3])) {
           if (array.includes(chromaticScale[Maj7])) {
-            seventhChordList.push([`${originalNoteName} Major 7`, cardList.filter((value) => seventh.includes(value[0]))])
+            playedSeventhChObj[`${cardList[index].name} Major 7`] = cardList.filter((value) => seventhCh.includes(value.name))
           }
           else if (array.includes(chromaticScale[m7])) {
-            seventhChordList.push([`${originalNoteName} Dom 7`, cardList.filter((value) => seventh.includes(value[0]))])
+            playedSeventhChObj[`${cardList[index].name} Dom 7`] = cardList.filter((value) => seventhCh.includes(value.name))
           }
         }
       }
       else if (array.includes(chromaticScale[flatFifth])) {
-        let seventh = createDiatonicStructure(cardList[index][0], majorScale, "seventhChord")
         if (array.includes(chromaticScale[m3])) {
           if (array.includes(chromaticScale[m7])) {
-            seventhChordList.push([`${originalNoteName} Minor 7 flat 5`, cardList.filter((value) => seventh.includes(value[0]))])
+            playedSeventhChObj[`${cardList[index].name} Minor 7 flat 5`] = cardList.filter((value) => seventhCh.includes(value.name))
           }
         }
-
       }
     })
-
-  return seventhChordList.length != 0 ?  seventhChordList :  null;
+    c.log(playedSeventhChObj)
+    return playedSeventhChObj
   }
   else {
     return null
   }
 }
+
+
 
 
 
@@ -1323,6 +1320,13 @@ function displayData(list, txt, parent) {
   }
 }
 
+function displayData2(txt, parent) {
+  let handData = document.createElement("div")
+  handData.classList.add("handType")
+  handData.innerHTML = txt
+  parent.appendChild(handData)
+}
+
 
 function checkAllHandTypes(selectedCards, gameObj) {
 
@@ -1332,18 +1336,18 @@ function checkAllHandTypes(selectedCards, gameObj) {
   let intervalList = identifyIntervalsInHand(sortedHand)
   console.log(intervalList)
   //let topOctaves = getTopRepeatingofHandType(sortedHand)
-  //let topIntervals = getTopRepeatingofHandType(intervalList)
+  let topIntervals = getTopRepeatingofHandType(intervalList)
 
   let triadList = identifyTriadsInHand(sortedHand, gameObj.scale)
   //console.log(triadList)
-  let seventhList = identifySeventhChordsInHand(sortedHand, gameObj)
+  let seventhList = identifySeventhChordsInHand(sortedHand, gameObj.scale)
   console.log(seventhList)
   //let scaleList = identifyDiatonicScalesInHand(octaveList, gameObj)
   let scaleList = identifyAllDiatonicScalesInHand(sortedHand, gameObj)
 
   return {
-    octaves: topOctaves,
-    intervals: topIntervals,
+    octaves: octaveList,
+    intervals: intervalList,
     triads: triadList,
     sevenths: seventhList,
     scales: scaleList
@@ -1353,19 +1357,26 @@ function checkAllHandTypes(selectedCards, gameObj) {
 
 
 
-
-
-
-
 function displayAllHands(playedHandObj) {
   console.log(playedHandObj)
 
-  displayData(playedHandObj.octaves, playedHandObj.octaves[0][1] + " octaves of ", handTypeDisplay)
-  displayData(playedHandObj.intervals, " Intervals of ", handTypeDisplay)
-  displayData(playedHandObj.triads, "Triads of ", handTypeDisplay)
-  displayData(playedHandObj.sevenths, "Sevenths of ", handTypeDisplay)
-  displayData(playedHandObj.scales[0], "", handTypeDisplay)
+  playedHandObj.octaves.forEach((elem) => {
+    displayData2(elem.octaves.length + " octaves of " + elem.name, handTypeDisplay)
+  })
 
+  for (const property in playedHandObj.intervals) {
+    displayData2("Interval of " + property, handTypeDisplay)
+  }
+
+  for (const property in playedHandObj.triads) {
+    displayData2("Triad of " + property, handTypeDisplay)
+  }
+
+  for (const property in playedHandObj.sevenths) {
+    displayData2("Seventh of " + property, handTypeDisplay)
+  }
+
+  //displayData(playedHandObj.scales[0], "", handTypeDisplay)
 }
 
 function chooseTopScoringHand(playedHandObj) {
@@ -1529,10 +1540,10 @@ cardList = player1.querySelectorAll(".cardDiv")
 playBtn.addEventListener("click", (e) => {
   removeChildrenDivs(handTypeDisplay)
   let playedHandObj = checkAllHandTypes(selectedCards, gameObj)
-  //displayAllHands(playedHandObj)
+  displayAllHands(playedHandObj)
   console.log(playedHandObj)
   
-  calculateHandScore(chooseTopScoringHand(playedHandObj), playedHandObj )
+  //calculateHandScore(chooseTopScoringHand(playedHandObj), playedHandObj )
 
 
   selectedCards.forEach((elem) => elem.remove())
@@ -1845,7 +1856,58 @@ function identifyTriadsInHand2(cardList, gameObj) {
   }
 }
 
+function identifySeventhChordsInHand2(cardList, gameObj) {
+  //create chromatic scale
+  //check all intervals from each note
+  //check if fifth exists, then check if third, then check if seventh
+  let majorScale = gameObj.scale
+  if (cardList.length > 2) {
+    let chromaticScale = buildChromaticScaleEnharmonic()
+    let enharmonicList = cardList.map((elem) => [convertToEnharmonicName(elem[0]), elem[1]]).filter((value) => Number(value[1].length) > 0 )
+    let seventhChordList = []
 
+    enharmonicList.map((x) => {return x[0]}).forEach((note, index, array) => {
+      let originalNoteName = cardList[index][0]
+      let flatFifth = (chromaticScale.indexOf(note) + 6) % chromaticScale.length
+      let fifth = (chromaticScale.indexOf(note) + 7) % chromaticScale.length
+      let m3 = (chromaticScale.indexOf(note) + 3) % chromaticScale.length
+      let Maj3 = (chromaticScale.indexOf(note) + 4) % chromaticScale.length
+      let m7 = (chromaticScale.indexOf(note) + 10) % chromaticScale.length
+      let Maj7 = (chromaticScale.indexOf(note) + 11) % chromaticScale.length
+
+      if (array.includes(chromaticScale[fifth])) {
+        let seventh = createDiatonicStructure(cardList[index][0], majorScale, "seventhChord")
+        if (array.includes(chromaticScale[m3])) {
+          if (array.includes(chromaticScale[m7])) {
+            seventhChordList.push([`${originalNoteName} Minor 7`, cardList.filter((value) => seventh.includes(value[0]))])
+          }
+        }
+        if (array.includes(chromaticScale[Maj3])) {
+          if (array.includes(chromaticScale[Maj7])) {
+            seventhChordList.push([`${originalNoteName} Major 7`, cardList.filter((value) => seventh.includes(value[0]))])
+          }
+          else if (array.includes(chromaticScale[m7])) {
+            seventhChordList.push([`${originalNoteName} Dom 7`, cardList.filter((value) => seventh.includes(value[0]))])
+          }
+        }
+      }
+      else if (array.includes(chromaticScale[flatFifth])) {
+        let seventh = createDiatonicStructure(cardList[index][0], majorScale, "seventhChord")
+        if (array.includes(chromaticScale[m3])) {
+          if (array.includes(chromaticScale[m7])) {
+            seventhChordList.push([`${originalNoteName} Minor 7 flat 5`, cardList.filter((value) => seventh.includes(value[0]))])
+          }
+        }
+
+      }
+    })
+
+  return seventhChordList.length != 0 ?  seventhChordList :  null;
+  }
+  else {
+    return null
+  }
+}
 
 function checkAllHandTypes2(selectedCards, gameObj) {
 
