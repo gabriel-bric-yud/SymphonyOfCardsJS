@@ -1228,15 +1228,15 @@ function identifySeventhChordsInHand(cardList, scale) {
   }
 }
 
-function identifySingleScaleInHand(cardList, scale) {
+function identifySingleScaleInHand(cardList, enharmonicList, scale) {
   c.log(cardList)
   c.log(scale)
 
   let scalePossible = true
   let playedNotes = []
   for (let i = 0; i < scale.length; i++) {
-    for (let g = 0; g < cardList.length; g++) {
-      if (scale[i] == cardList[g].name) {
+    for (let g = 0; g < enharmonicList.length; g++) {
+      if (scale[i] == enharmonicList[g].name) {
         scalePossible = true
         playedNotes.push(cardList[g])
         break;
@@ -1281,9 +1281,9 @@ function identifyScalesInHand(cardList) {
       let pentaScaleMinor = createHarmonicStructure(enharmonicList[i].name, "minorPenta", chromaticScale)
       c.log(pentaScaleMajor)
       c.log(pentaScaleMinor)
-      identifySingleScaleInHand(enharmonicList, heptaScale) != false ? playedScaleObj[`${cardList[i].name} Major Scale`] = identifySingleScaleInHand(enharmonicList, heptaScale)  : null
-      identifySingleScaleInHand(enharmonicList, pentaScaleMajor) != false ? playedScaleObj[`${cardList[i].name} Major Pentatonic Scale`] = identifySingleScaleInHand(enharmonicList, pentaScaleMajor)  : null
-      identifySingleScaleInHand(enharmonicList, pentaScaleMinor) != false ? playedScaleObj[`${cardList[i].name} Minor Pentatonic Scale`] = identifySingleScaleInHand(enharmonicList, pentaScaleMinor) : null
+      identifySingleScaleInHand(cardList, enharmonicList, heptaScale) != false ? playedScaleObj[`${cardList[i].name} Major Scale`] = identifySingleScaleInHand(cardList, enharmonicList, heptaScale)  : null
+      identifySingleScaleInHand(cardList, enharmonicList, pentaScaleMajor) != false ? playedScaleObj[`${cardList[i].name} Major Pentatonic Scale`] = identifySingleScaleInHand(cardList, enharmonicList, pentaScaleMajor)  : null
+      identifySingleScaleInHand(cardList, enharmonicList, pentaScaleMinor) != false ? playedScaleObj[`${cardList[i].name} Minor Pentatonic Scale`] = identifySingleScaleInHand(cardList, enharmonicList, pentaScaleMinor) : null
 
     }
     c.log(playedScaleObj)
@@ -1481,8 +1481,8 @@ let currentScale = buildMajorScale(scaleCtrl.value)
 let currentScaleList = [scaleCtrl.value]
 let deck = buildMusicDeck(currentScale, 7)
 
-//deck = buildMusicDeck(buildMajorScale("C").concat(buildMajorScale("F")), 7)
-//currentScale = buildMajorScale("C").concat(buildMajorScale("F"))
+deck = buildMusicDeck(buildMajorScale("C").concat(buildMajorScale("F")), 7)
+currentScale = buildMajorScale("C").concat(buildMajorScale("F"))
 
 let gameObj = updateGameObj(currentScale, keySig, deck)
 
