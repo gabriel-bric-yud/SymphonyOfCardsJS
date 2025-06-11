@@ -69,7 +69,7 @@ const chromaticStructuresIntervalicObj = {
   majorPenta: [0,2,2,3,2],
   minorPenta: [0,3,2,2,3],
   majorTriad: [0,4,3],
-  majorSeventhChord: [1,4,3,4],
+  majorSeventhChord: [0,4,3,4],
   minorTriad: [0,3,4],
   minorSeventhChord: [0,3,4,3],
   domSeventhChord: [0,4,3,3],
